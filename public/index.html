@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>NeighbourHub — Local Service Marketplace</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <link rel="stylesheet" href="/css/landing.css"/>
+  <link rel="stylesheet" href="/css/chat.css"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="/">Neighbour<span>Hub</span></a>
+  <div class="nav-links" id="nav-links"></div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-eyebrow">🏘️ Your Neighbourhood, Connected</div>
+      <h1 class="hero-title">Find <em>Trusted</em> Local Services — Fast</h1>
+      <p class="hero-desc">NeighbourHub connects you with verified local plumbers, tutors, electricians, doctors and more in your area. Post a request or browse professionals — all in one place.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="/how-to-service">🔍 Find a Service</a>
+        <a class="btn btn-secondary btn-lg" href="/find-work">💼 Offer Your Skills</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item"><div class="stat-num">6+</div><div class="stat-label">Service Categories</div></div>
+        <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Local Providers</div></div>
+        <div class="stat-item"><div class="stat-num">Free</div><div class="stat-label">To Join & Post</div></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="service-card-demo"><div class="scd-icon" style="background:rgba(59,130,246,.15)">🔧</div><div class="scd-info"><div class="scd-name">Rajesh Kumar</div><div class="scd-sub">Expert Plumber · 8 yrs exp</div></div><div class="scd-rate">₹350/hr</div></div>
+      <div class="service-card-demo"><div class="scd-icon" style="background:rgba(16,185,129,.15)">📚</div><div class="scd-info"><div class="scd-name">Priya Sharma</div><div class="scd-sub">Maths & Science Tutor</div></div><div class="scd-rate">₹500/hr</div></div>
+      <div class="service-card-demo"><div class="scd-icon" style="background:rgba(245,158,11,.15)">⚡</div><div class="scd-info"><div class="scd-name">Amit Singh</div><div class="scd-sub">Licensed Electrician</div></div><div class="scd-rate">₹400/hr</div></div>
+      <div class="service-card-demo"><div class="scd-icon" style="background:rgba(239,68,68,.15)">🩺</div><div class="scd-info"><div class="scd-name">Dr. Neha Agarwal</div><div class="scd-sub">General Physician · Home visits</div></div><div class="scd-rate">₹800/hr</div></div>
+      <div class="service-card-demo"><div class="scd-icon" style="background:rgba(249,115,22,.15)">🛵</div><div class="scd-info"><div class="scd-name">Suresh Patel</div><div class="scd-sub">Delivery Agent · Same day</div></div><div class="scd-rate">₹200/hr</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="container">
+    <div class="how-header">
+      <h2>How NeighbourHub Works</h2>
+      <p>Simple steps to connect with the right local professional</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card"><div class="step-num">1</div><div class="step-icon">📝</div><h3>Create Account</h3><p>Sign up as a customer or as a service provider ready to work.</p></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-icon">🎯</div><h3>Pick Your Service</h3><p>Choose from Plumber, Tutor, Electrician, Doctor, Delivery Agent and more.</p></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-icon">💬</div><h3>Chat & Connect</h3><p>Message providers directly on NeighbourHub or reach them via WhatsApp, Instagram, or Twitter.</p></div>
+      <div class="step-card"><div class="step-num">4</div><div class="step-icon">⭐</div><h3>Job Done!</h3><p>Get your work done by trusted local professionals in your neighbourhood.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES STRIP -->
+<section class="services-strip">
+  <div class="container">
+    <h2>Services Available Near You</h2>
+    <p>Tap a category to explore providers</p>
+    <div class="services-icons">
+      <div class="service-pill" onclick="location.href='/how-to-service'"><span>🔧</span> Plumber</div>
+      <div class="service-pill" onclick="location.href='/how-to-service'"><span>📚</span> Tutor</div>
+      <div class="service-pill" onclick="location.href='/how-to-service'"><span>⚡</span> Electrician</div>
+      <div class="service-pill" onclick="location.href='/how-to-service'"><span>🛵</span> Delivery Agent</div>
+      <div class="service-pill" onclick="location.href='/how-to-service'"><span>🩺</span> Doctor</div>
+      <div class="service-pill" onclick="location.href='/how-to-service'"><span>🛠️</span> Others</div>
+    </div>
+  </div>
+</section>
+
+<div id="toast"></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal-box" id="modal-box"></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/shared.js"></script>
+<script src="/js/chat.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await renderNavbar();
+    const u = window.__currentUser;
+    if (u) ChatWidget.init(u._id);
+  });
+</script>
+</body>
+</html>

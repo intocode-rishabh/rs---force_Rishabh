@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>My Profile — NeighbourHub</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <link rel="stylesheet" href="/css/chat.css"/>
+  <style>
+    .profile-layout { display:grid; grid-template-columns:280px 1fr; gap:28px; align-items:start; }
+    @media(max-width:768px){ .profile-layout{grid-template-columns:1fr} }
+
+    .profile-sidebar { background:white; border-radius:var(--radius-lg); padding:28px; box-shadow:var(--shadow-sm); text-align:center; position:sticky; top:84px; }
+    .sidebar-avatar-wrap { position:relative; display:inline-block; margin-bottom:14px; }
+    .sidebar-name { font-family:var(--font-display); font-size:1.15rem; font-weight:700; color:var(--navy); }
+    .sidebar-handle { color:var(--grey-600); font-size:0.85rem; margin:3px 0 8px; }
+    .sidebar-location { color:var(--grey-600); font-size:0.85rem; margin-bottom:12px; }
+    .sidebar-contacts { display:flex; justify-content:center; gap:10px; margin-top:10px; }
+    .contact-icon { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.9rem; text-decoration:none; transition:var(--transition); }
+    .contact-icon:hover { transform:scale(1.15); }
+    .contact-icon.wa  { background:#d1fae5; color:#065f46; }
+    .contact-icon.ig  { background:#fce7f3; color:#9d174d; }
+    .contact-icon.tw  { background:#dbeafe; color:#1d4ed8; }
+
+    .profile-main { display:flex; flex-direction:column; gap:22px; }
+    .profile-card { background:white; border-radius:var(--radius-lg); padding:28px; box-shadow:var(--shadow-sm); }
+    .profile-card h3 { font-family:var(--font-display); color:var(--navy); margin-bottom:20px; display:flex; align-items:center; gap:8px; font-size:1.05rem; }
+
+    .incomplete-banner { background:linear-gradient(135deg,#1e3050,#2a4a70); border-radius:var(--radius-lg); padding:22px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:22px; }
+    .incomplete-banner .bt { color:var(--amber); font-family:var(--font-display); font-weight:700; margin-bottom:3px; }
+    .incomplete-banner p { color:rgba(255,255,255,0.65); font-size:0.88rem; }
+
+    .connect-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    @media(max-width:500px){ .connect-grid{grid-template-columns:1fr} }
+    .connect-label { font-size:0.78rem; font-weight:700; color:var(--grey-600); text-transform:uppercase; letter-spacing:0.4px; display:flex; align-items:center; gap:5px; margin-bottom:5px; }
+
+    /* AI bio enhance */
+    .bio-wrap { position:relative; }
+    .enhance-btn { position:absolute; top:10px; right:10px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; border:none; border-radius:var(--radius-sm); padding:6px 12px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:var(--transition); display:flex; align-items:center; gap:5px; }
+    .enhance-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(99,102,241,0.4); }
+    .enhance-btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+    #pf-about { padding-right:110px; }
+
+    .hourly-wrap { display:none; }
+    .save-row { display:flex; gap:14px; justify-content:flex-end; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="/">Neighbour<span>Hub</span></a>
+  <div class="nav-links" id="nav-links"></div>
+</nav>
+
+<div class="page-container">
+
+  <!-- Incomplete profile banner (hidden when complete) -->
+  <div class="incomplete-banner" id="incomplete-banner" style="display:none">
+    <div>
+      <div class="bt">⚠️ Complete Your Profile</div>
+      <p>Set up your profile to unlock Find Service or Find Work features.</p>
+    </div>
+    <span style="color:rgba(255,255,255,0.4);font-size:0.85rem">Fill the form below ↓</span>
+  </div>
+
+  <div class="profile-layout">
+    <!-- Sidebar preview -->
+    <aside class="profile-sidebar">
+      <div class="sidebar-avatar-wrap">
+        <div class="avatar avatar-lg" id="sidebar-avatar">U</div>
+      </div>
+      <div class="sidebar-name" id="sidebar-name">Your Name</div>
+      <div class="sidebar-handle" id="sidebar-handle">@username</div>
+      <div id="sidebar-badge" style="margin-bottom:8px"></div>
+      <div class="sidebar-location" id="sidebar-location">📍 Location</div>
+      <div class="divider"></div>
+      <div class="sidebar-contacts" id="sidebar-contacts"></div>
+    </aside>
+
+    <!-- Edit form -->
+    <main class="profile-main">
+
+      <!-- Basic info -->
+      <div class="profile-card">
+        <h3>👤 Basic Information</h3>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="form-group">
+            <label>Username (must be unique)</label>
+            <input type="text" id="pf-username" placeholder="e.g. rajesh_plumber"/>
+          </div>
+          <div class="form-group">
+            <label>About You</label>
+            <div class="bio-wrap">
+              <textarea id="pf-about" rows="4" placeholder="Tell customers a bit about yourself, your experience and skills..."></textarea>
+              <button class="enhance-btn" id="enhance-btn" onclick="enhanceBio()" title="AI will rewrite your bio to sound more professional">✨ Enhance</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="pf-location" placeholder="e.g. Sector 12, Lucknow"/>
+          </div>
+          <div class="form-group hourly-wrap" id="hourly-wrap">
+            <label>Hourly Rate (₹)</label>
+            <input type="number" id="pf-hourly-rate" placeholder="e.g. 350" min="0" max="10000"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile pic -->
+      <div class="profile-card">
+        <h3>🖼️ Profile Picture <span style="font-size:0.82rem;font-weight:400;color:var(--grey-600)">(optional)</span></h3>
+        <div class="form-group">
+          <label>Image URL</label>
+          <input type="url" id="pf-pic-url" placeholder="https://your-image-link.com/photo.jpg"/>
+        </div>
+        <p style="font-size:0.82rem;color:var(--grey-600);margin-top:8px">Paste a direct link to your photo. A default avatar will be used otherwise.</p>
+      </div>
+
+      <!-- Connect -->
+      <div class="profile-card">
+        <h3>🔗 Connect <span style="font-size:0.82rem;font-weight:400;color:var(--grey-600)">(add at least 1, max 2)</span></h3>
+        <div class="connect-grid">
+          <div>
+            <div class="connect-label">💬 WhatsApp</div>
+            <div class="form-group" style="gap:0"><input type="text" id="pf-whatsapp" placeholder="+91XXXXXXXXXX"/></div>
+          </div>
+          <div>
+            <div class="connect-label">📸 Instagram</div>
+            <div class="form-group" style="gap:0"><input type="text" id="pf-instagram" placeholder="@handle"/></div>
+          </div>
+          <div>
+            <div class="connect-label">🐦 Twitter</div>
+            <div class="form-group" style="gap:0"><input type="text" id="pf-twitter" placeholder="@handle"/></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save -->
+      <div class="save-row">
+        <a class="btn btn-outline" href="/">Cancel</a>
+        <button class="btn btn-primary btn-lg" onclick="saveProfile()">💾 Save Profile</button>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal-box" id="modal-box"></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/shared.js"></script>
+<script src="/js/chat.js"></script>
+<script>
+  let currentUser = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await renderNavbar();
+    const u = window.__currentUser;
+    if (!u) { location.href = '/login'; return; }
+    currentUser = u;
+
+    // Show incomplete banner
+    if (!u.profileComplete) {
+      document.getElementById('incomplete-banner').style.display = 'flex';
+    }
+
+    // Show hourly rate for providers
+    if (u.role === 'provider') {
+      document.getElementById('hourly-wrap').style.display = 'flex';
+    }
+
+    // Fill form
+    setVal('pf-username', u.username);
+    setVal('pf-about', u.about);
+    setVal('pf-location', u.location);
+    setVal('pf-hourly-rate', u.hourlyRate);
+    setVal('pf-pic-url', u.profilePic);
+    setVal('pf-whatsapp', u.contacts?.whatsapp);
+    setVal('pf-instagram', u.contacts?.instagram);
+    setVal('pf-twitter', u.contacts?.twitter);
+
+    updateSidebar(u);
+    ChatWidget.init(u._id);
+
+    // Live sidebar preview on input
+    ['pf-username','pf-location','pf-about','pf-pic-url'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', previewSidebar);
+    });
+  });
+
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== null && val !== undefined) el.value = val;
+  }
+
+  function previewSidebar() {
+    const draft = {
+      ...currentUser,
+      username: document.getElementById('pf-username')?.value || currentUser.username,
+      location: document.getElementById('pf-location')?.value || currentUser.location,
+      profilePic: document.getElementById('pf-pic-url')?.value || currentUser.profilePic,
+    };
+    updateSidebar(draft);
+  }
+
+  function updateSidebar(u) {
+    const initials = (u.name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const av = document.getElementById('sidebar-avatar');
+    if (av) {
+      if (u.profilePic) av.innerHTML = `<img src="${u.profilePic}" alt="avatar" onerror="this.parentElement.textContent='${initials}'">`;
+      else av.textContent = initials;
+    }
+    const el = id => document.getElementById(id);
+    if (el('sidebar-name'))   el('sidebar-name').textContent = u.name;
+    if (el('sidebar-handle')) el('sidebar-handle').textContent = u.username ? '@' + u.username : 'Set username ↓';
+    if (el('sidebar-badge'))  el('sidebar-badge').innerHTML = profBadge(u.profession, u.role);
+    if (el('sidebar-location')) el('sidebar-location').textContent = '📍 ' + (u.location || 'Location not set');
+
+    const ci = el('sidebar-contacts');
+    if (ci) {
+      const c = u.contacts || {};
+      ci.innerHTML = '';
+      if (c.whatsapp)  ci.innerHTML += `<a class="contact-icon wa" href="https://wa.me/${c.whatsapp.replace(/\D/g,'')}" target="_blank">💬</a>`;
+      if (c.instagram) ci.innerHTML += `<a class="contact-icon ig" href="https://instagram.com/${c.instagram.replace('@','')}" target="_blank">📸</a>`;
+      if (c.twitter)   ci.innerHTML += `<a class="contact-icon tw" href="https://twitter.com/${c.twitter.replace('@','')}" target="_blank">🐦</a>`;
+    }
+  }
+
+  async function enhanceBio() {
+    const textarea = document.getElementById('pf-about');
+    const bio = textarea?.value?.trim();
+    if (!bio || bio.length < 5) return Toast.show('Write something in About first.', 'error');
+
+    const btn = document.getElementById('enhance-btn');
+    btn.disabled = true; btn.textContent = '⏳ Enhancing...';
+
+    const res = await API.post('/api/ai/enhance-bio', { bio });
+    btn.disabled = false; btn.innerHTML = '✨ Enhance';
+
+    if (res.error) return Toast.show(res.error, 'error');
+    textarea.value = res.enhanced;
+    Toast.show('Bio enhanced by AI! ✨', 'success');
+  }
+
+  async function saveProfile() {
+    const username   = document.getElementById('pf-username')?.value?.trim();
+    const about      = document.getElementById('pf-about')?.value?.trim();
+    const location   = document.getElementById('pf-location')?.value?.trim();
+    const hourlyRate = document.getElementById('pf-hourly-rate')?.value?.trim();
+    const profilePic = document.getElementById('pf-pic-url')?.value?.trim();
+    const whatsapp   = document.getElementById('pf-whatsapp')?.value?.trim();
+    const instagram  = document.getElementById('pf-instagram')?.value?.trim();
+    const twitter    = document.getElementById('pf-twitter')?.value?.trim();
+
+    if (!username) return Toast.show('Username is required.', 'error');
+    if (!about)    return Toast.show('Please write something in About.', 'error');
+    if (!location) return Toast.show('Location is required.', 'error');
+
+    const contacts = { whatsapp: whatsapp || null, instagram: instagram || null, twitter: twitter || null };
+    const filled = Object.values(contacts).filter(Boolean).length;
+    if (filled < 1) return Toast.show('Add at least 1 contact option.', 'error');
+
+    const res = await API.put('/api/users/profile/update', {
+      username, about, location, contacts,
+      hourlyRate: hourlyRate || null,
+      profilePic: profilePic || null
+    });
+
+    if (res.error) return Toast.show(res.error, 'error');
+
+    currentUser = res.user;
+    window.__currentUser = res.user;
+    updateSidebar(res.user);
+    document.getElementById('incomplete-banner').style.display = 'none';
+    Toast.show('Profile saved! ✅', 'success');
+    await renderNavbar();
+  }
+</script>
+</body>
+</html>

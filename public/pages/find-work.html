@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Find Work — NeighbourHub</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <link rel="stylesheet" href="/css/chat.css"/>
+  <style>
+    .auth-wall { max-width:480px; margin:80px auto; background:white; border-radius:var(--radius-lg); padding:60px 40px; text-align:center; box-shadow:var(--shadow-sm); }
+    .auth-wall .lock { font-size:4rem; margin-bottom:20px; }
+    .auth-wall h2 { color:var(--navy); margin-bottom:10px; }
+    .auth-wall p  { margin-bottom:28px; }
+    .auth-wall-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .work-filter-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:white; padding:14px 18px; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); margin-bottom:22px; }
+    .work-filter-bar label { font-size:0.85rem; font-weight:600; color:var(--grey-600); }
+    .work-filter-bar select { padding:7px 12px; border:2px solid var(--grey-200); border-radius:var(--radius-sm); font-family:var(--font-body); font-size:0.88rem; outline:none; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="/">Neighbour<span>Hub</span></a>
+  <div class="nav-links" id="nav-links"></div>
+</nav>
+
+<div class="page-container" id="page-content">
+  <div class="spinner" style="margin-top:80px"></div>
+</div>
+
+<div id="toast"></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal-box" id="modal-box"></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/shared.js"></script>
+<script src="/js/chat.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await renderNavbar();
+    const u = window.__currentUser;
+
+    if (!u) { renderGuestWall(); return; }
+    if (u.role === 'customer') { location.href = '/find-service'; return; }
+    if (!u.profileComplete) { Toast.show('Complete your profile first!', 'error'); setTimeout(() => location.href = '/profile', 1200); return; }
+
+    ChatWidget.init(u._id);
+    await renderProviderView(u);
+  });
+
+  function renderGuestWall() {
+    document.getElementById('page-content').innerHTML = `
+      <div class="auth-wall">
+        <div class="lock">🔒</div>
+        <h2>Login Required</h2>
+        <p>You need to log in as a <strong>service provider</strong> to browse work requests posted by customers.</p>
+        <div class="auth-wall-btns">
+          <a class="btn btn-primary btn-lg" href="/login">Login / Sign Up</a>
+          <a class="btn btn-outline btn-lg" href="/">Go Home</a>
+        </div>
+      </div>`;
+  }
+
+  async function renderProviderView(u) {
+    document.getElementById('page-content').innerHTML = `
+      <div class="page-header">
+        <h1>Work Requests</h1>
+        <p>Customer requests matching your profession: <strong>${u.profession}</strong></p>
+      </div>
+      <div class="work-filter-bar">
+        <label>Sort by:</label>
+        <select id="work-sort" onchange="loadPosts('${u.profession}')">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+        </select>
+      </div>
+      <div id="posts-grid" class="grid-2">
+        <div class="spinner" style="grid-column:1/-1"></div>
+      </div>`;
+    await loadPosts(u.profession);
+  }
+
+  async function loadPosts(profession) {
+    const grid = document.getElementById('posts-grid');
+    const res  = await API.get(`/api/posts?profession=${encodeURIComponent(profession)}`);
+    let posts  = res.posts || [];
+
+    const sort = document.getElementById('work-sort')?.value;
+    if (sort === 'oldest') posts.reverse();
+
+    if (!posts.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">📭</div><h3>No requests yet</h3><p>Customers will post their requirements here. Check back later!</p></div>`;
+      return;
+    }
+    grid.innerHTML = posts.map(p => postCardHTML(p)).join('');
+  }
+
+  function postCardHTML(p) {
+    const initials = (p.userName||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const profMap = { Plumber:'badge-plumber', Tutor:'badge-tutor', Electrician:'badge-electrician', 'Delivery Agent':'badge-delivery', Doctor:'badge-doctor', Others:'badge-others' };
+    return `
+    <div class="post-card">
+      <div class="post-card-top">
+        <div class="post-user-info">
+          <div class="avatar avatar-sm">${initials}</div>
+          <div>
+            <div class="post-user-name">${p.userName || 'Anonymous'}</div>
+            <div class="post-time">${timeAgo(p.createdAt)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="post-desc">${p.description}</div>
+      <div class="post-card-footer">
+        <span class="badge ${profMap[p.profession]||'badge-others'}">${p.profession}</span>
+        <button class="btn btn-primary btn-sm" onclick="viewCustomer('${p.userId}')">Connect →</button>
+      </div>
+    </div>`;
+  }
+
+  async function viewCustomer(userId) {
+    const res = await API.get('/api/users/' + userId);
+    if (res.error || !res.user) return Toast.show('Could not load customer profile.', 'error');
+    // openProfileModal from shared.js handles safe rendering
+    openProfileModal(res.user);
+  }
+</script>
+</body>
+</html>

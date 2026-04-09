@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Find a Service — NeighbourHub</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <link rel="stylesheet" href="/css/chat.css"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="/">Neighbour<span>Hub</span></a>
+  <div class="nav-links" id="nav-links"></div>
+</nav>
+
+<div class="page-container">
+  <div class="page-header">
+    <h1>Find a Service</h1>
+    <p>Browse local professionals or post your service request</p>
+  </div>
+
+  <!-- Category selector -->
+  <div class="service-categories" id="categories">
+    <div class="category-card" data-profession="Plumber">        <div class="category-icon">🔧</div><div class="category-name">Plumber</div></div>
+    <div class="category-card" data-profession="Tutor">          <div class="category-icon">📚</div><div class="category-name">Tutor</div></div>
+    <div class="category-card" data-profession="Electrician">    <div class="category-icon">⚡</div><div class="category-name">Electrician</div></div>
+    <div class="category-card" data-profession="Delivery Agent"> <div class="category-icon">🛵</div><div class="category-name">Delivery Agent</div></div>
+    <div class="category-card" data-profession="Doctor">         <div class="category-icon">🩺</div><div class="category-name">Doctor</div></div>
+    <div class="category-card" data-profession="Others">         <div class="category-icon">🛠️</div><div class="category-name">Others</div></div>
+  </div>
+
+  <!-- Post a request -->
+  <div class="post-request-area">
+    <h3>📣 Post a Request</h3>
+    <p>Describe what you need — matching providers will see your post. Select a category above first.</p>
+    <textarea class="post-textarea" id="post-text" maxlength="280"
+      placeholder="e.g. My kitchen tap is leaking and needs urgent fixing. Available on weekdays in Gomti Nagar..."
+      oninput="document.getElementById('char-count').textContent=this.value.length+'/280'"></textarea>
+    <div class="post-actions">
+      <span class="char-count" id="char-count">0/280</span>
+      <button class="btn btn-primary" onclick="postRequest()">📤 Post Request</button>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <label>Max Rate:</label>
+    <input type="range" id="rate-filter" min="100" max="2000" value="2000" step="50"
+      oninput="document.getElementById('rate-label').textContent='₹'+this.value+'/hr'; loadProviders()"/>
+    <span class="rate-display" id="rate-label">₹2000/hr</span>
+    <label style="margin-left:auto">Sort by:</label>
+    <select id="sort-select" onchange="loadProviders()">
+      <option value="default">Default</option>
+      <option value="low">Rate: Low to High</option>
+      <option value="high">Rate: High to Low</option>
+      <option value="stars">⭐ Highest Rated</option>
+    </select>
+  </div>
+
+  <!-- Providers grid -->
+  <div id="providers-grid" class="grid-3">
+    <div class="empty-state" style="grid-column:1/-1">
+      <div class="icon">👆</div>
+      <h3>Select a category above</h3>
+      <p>Choose a service type to see available providers in your area.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal-box" id="modal-box"></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/shared.js"></script>
+<script src="/js/chat.js"></script>
+<script>
+  let selectedProfession = null;
+  let currentUser = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await renderNavbar();
+    const u = window.__currentUser;
+    if (!u) { location.href = '/login'; return; }
+    if (u.role === 'provider') { location.href = '/find-work'; return; }
+    if (!u.profileComplete) { Toast.show('Please complete your profile first!', 'error'); setTimeout(() => location.href = '/profile', 1200); return; }
+    currentUser = u;
+    ChatWidget.init(u._id);
+    bindCategories();
+  });
+
+  function bindCategories() {
+    document.querySelectorAll('.category-card').forEach(card => {
+      card.onclick = () => {
+        const same = selectedProfession === card.dataset.profession;
+        document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
+        if (!same) {
+          card.classList.add('selected');
+          selectedProfession = card.dataset.profession;
+        } else {
+          selectedProfession = null;
+        }
+        loadProviders();
+      };
+    });
+  }
+
+  async function loadProviders() {
+    const grid = document.getElementById('providers-grid');
+    if (!selectedProfession) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">👆</div><h3>Select a category above</h3><p>Choose a service type to see available providers.</p></div>`;
+      return;
+    }
+    grid.innerHTML = '<div class="spinner" style="grid-column:1/-1"></div>';
+
+    const maxRate = document.getElementById('rate-filter').value;
+    const res = await API.get(`/api/users?profession=${encodeURIComponent(selectedProfession)}&maxRate=${maxRate}`);
+    let providers = res.providers || [];
+
+    const sort = document.getElementById('sort-select').value;
+    if (sort === 'low')   providers.sort((a,b) => (a.hourlyRate||0)-(b.hourlyRate||0));
+    if (sort === 'high')  providers.sort((a,b) => (b.hourlyRate||0)-(a.hourlyRate||0));
+    if (sort === 'stars') providers.sort((a,b) => (b.avgRating||0)-(a.avgRating||0));
+
+    if (!providers.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><h3>No providers found</h3><p>Try different filters or check back later.</p></div>`;
+      return;
+    }
+
+    // Store in global array — safe click by index, no JSON-in-onclick
+    window.__providers = providers;
+    grid.innerHTML = providers.map((p, idx) => providerCardHTML(p, idx)).join('');
+  }
+
+  function providerCardHTML(p, idx) {
+    const profMap = { Plumber:'badge-plumber', Tutor:'badge-tutor', Electrician:'badge-electrician', 'Delivery Agent':'badge-delivery', Doctor:'badge-doctor', Others:'badge-others' };
+    const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const pic = p.profilePic ? `<div class="avatar avatar-md"><img src="${p.profilePic}" alt="${initials}"></div>` : `<div class="avatar avatar-md">${initials}</div>`;
+    const stars = p.avgRating
+      ? `<span style="color:var(--amber);font-size:0.82rem">${'★'.repeat(Math.round(p.avgRating))}${'☆'.repeat(5-Math.round(p.avgRating))}</span> <span style="font-size:0.78rem;color:var(--grey-600)">${Number(p.avgRating).toFixed(1)}</span>`
+      : `<span style="font-size:0.78rem;color:var(--grey-400)">No reviews</span>`;
+    return `
+    <div class="provider-card" onclick="openProviderByIndex(${idx})">
+      <div class="provider-card-top">
+        ${pic}
+        <div class="provider-info">
+          <div class="provider-name">${p.name}</div>
+          <div class="provider-handle">${p.username ? '@'+p.username : ''}</div>
+          <span class="badge ${profMap[p.profession]||'badge-others'}" style="margin-top:5px">${p.profession}</span>
+        </div>
+        <div class="provider-rate">₹${p.hourlyRate||'?'}<span style="font-size:0.7rem;font-weight:400;color:var(--grey-600)">/hr</span></div>
+      </div>
+      <div class="provider-about">${p.about || 'No description provided.'}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div class="provider-location">📍 ${p.location || 'Location not set'}</div>
+        <div>${stars}</div>
+      </div>
+      <div class="provider-card-footer">
+        <span></span>
+        <button class="btn btn-primary btn-sm">View Profile →</button>
+      </div>
+    </div>`;
+  }
+
+  async function postRequest() {
+    const desc = document.getElementById('post-text')?.value?.trim();
+    if (!desc) return Toast.show('Please describe what you need.', 'error');
+    if (!selectedProfession) return Toast.show('Select a service category first.', 'error');
+
+    const res = await API.post('/api/posts', {
+      userName: currentUser.name,
+      profession: selectedProfession,
+      description: desc
+    });
+    if (res.error) return Toast.show(res.error, 'error');
+    document.getElementById('post-text').value = '';
+    document.getElementById('char-count').textContent = '0/280';
+    Toast.show('Request posted! Providers will see it. ✅', 'success');
+  }
+</script>
+</body>
+</html>

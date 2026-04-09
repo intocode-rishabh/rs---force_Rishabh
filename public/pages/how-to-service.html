@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>How to Find a Service — NeighbourHub</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <link rel="stylesheet" href="/css/chat.css"/>
+  <style>
+    .how-page { max-width:700px; margin:0 auto; padding:50px 20px 80px; }
+    .how-step { display:flex; gap:20px; margin-bottom:24px; padding:24px; background:white; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); }
+    .how-step-num { width:46px; height:46px; border-radius:50%; flex-shrink:0; background:var(--navy); color:var(--amber); font-family:var(--font-display); font-weight:800; font-size:1.1rem; display:flex; align-items:center; justify-content:center; }
+    .how-step-content h3 { color:var(--navy); margin-bottom:6px; }
+    .how-step-content p { font-size:0.9rem; }
+    .chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .chip { background:var(--amber-pale); color:var(--navy); padding:5px 14px; border-radius:100px; font-size:0.82rem; font-weight:600; }
+    .cta-box { background:linear-gradient(135deg,var(--navy),var(--navy-light)); border-radius:var(--radius-lg); padding:36px; text-align:center; margin-top:36px; }
+    .cta-box h3 { color:var(--amber); margin-bottom:8px; }
+    .cta-box p { color:rgba(255,255,255,0.65); margin-bottom:22px; font-size:0.9rem; }
+    .cta-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="/">Neighbour<span>Hub</span></a>
+  <div class="nav-links" id="nav-links"></div>
+</nav>
+
+<div class="how-page">
+  <div class="page-header">
+    <h1>How to Find a Service</h1>
+    <p>A step-by-step guide to get the help you need from local professionals.</p>
+  </div>
+
+  <div class="how-step">
+    <div class="how-step-num">1</div>
+    <div class="how-step-content">
+      <h3>Select Your Service Category</h3>
+      <p>Choose the type of professional you need from our 6 service categories:</p>
+      <div class="chip-row">
+        <span class="chip">🔧 Plumber</span>
+        <span class="chip">📚 Tutor</span>
+        <span class="chip">⚡ Electrician</span>
+        <span class="chip">🛵 Delivery Agent</span>
+        <span class="chip">🩺 Doctor</span>
+        <span class="chip">🛠️ Others</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="how-step">
+    <div class="how-step-num">2</div>
+    <div class="how-step-content">
+      <h3>Browse Service Providers</h3>
+      <p>See cards of local providers who have listed themselves. Each card shows their name, profession, location, about, and hourly rate. Filter by maximum price to find the best match for your budget.</p>
+    </div>
+  </div>
+
+  <div class="how-step">
+    <div class="how-step-num">3</div>
+    <div class="how-step-content">
+      <h3>Post a Request (Optional)</h3>
+      <p>Alternatively, post a request describing what you need — just like a tweet. Relevant service providers will see your post and reach out to connect with you directly.</p>
+      <div class="chip-row">
+        <span class="chip">📝 Twitter-style post</span>
+        <span class="chip">🎯 Category auto-tagged</span>
+        <span class="chip">👁️ Visible to providers</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="how-step">
+    <div class="how-step-num">4</div>
+    <div class="how-step-content">
+      <h3>Connect & Chat</h3>
+      <p>Click on any provider's card to view their full profile. Message them directly on NeighbourHub, or reach out via their WhatsApp, Instagram, or Twitter. No middleman, no commission.</p>
+    </div>
+  </div>
+
+  <div class="cta-box">
+    <h3>Ready to Get Started?</h3>
+    <p>Create a free account to browse providers, post requests, and chat directly.</p>
+    <div class="cta-btns">
+      <a class="btn btn-primary btn-lg" href="/login">Create Free Account</a>
+      <a class="btn btn-secondary btn-lg" href="/login">Login</a>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="modal-overlay" id="modal-overlay"><div class="modal-box" id="modal-box"></div></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/shared.js"></script>
+<script src="/js/chat.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await renderNavbar();
+    const u = window.__currentUser;
+    // If logged-in customer, redirect directly to find-service
+    if (u && u.role === 'customer' && u.profileComplete) {
+      location.href = '/find-service';
+      return;
+    }
+    if (u) ChatWidget.init(u._id);
+  });
+</script>
+</body>
+</html>

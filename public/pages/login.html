@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Login — NeighbourHub</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    body { background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .login-wrap { width:100%; max-width:460px; }
+    .login-top { text-align:center; margin-bottom:28px; }
+    .login-logo { font-family:var(--font-display); font-size:2rem; font-weight:800; color:var(--amber); }
+    .login-logo span { color:white; }
+    .login-tagline { color:rgba(255,255,255,0.55); font-size:0.9rem; margin-top:4px; }
+    .login-box { background:white; border-radius:var(--radius-lg); padding:36px 32px; box-shadow:var(--shadow-lg); }
+    .auth-tabs { display:flex; background:var(--grey-100); border-radius:var(--radius-sm); padding:4px; margin-bottom:26px; }
+    .auth-tab { flex:1; padding:9px; border:none; background:transparent; font-family:var(--font-body); font-size:0.9rem; font-weight:600; cursor:pointer; border-radius:6px; transition:var(--transition); color:var(--grey-600); }
+    .auth-tab.active { background:white; color:var(--navy); box-shadow:var(--shadow-sm); }
+    .auth-form { display:flex; flex-direction:column; gap:16px; }
+    .auth-form.hidden { display:none; }
+    .role-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .role-opt { border:2px solid var(--grey-200); border-radius:var(--radius-sm); padding:14px 10px; text-align:center; cursor:pointer; transition:var(--transition); font-weight:600; font-size:0.88rem; color:var(--grey-600); }
+    .role-opt:hover { border-color:var(--amber); color:var(--amber-dark); }
+    .role-opt.selected { border-color:var(--amber); background:var(--amber-pale); color:var(--navy); }
+    .role-icon { font-size:1.5rem; display:block; margin-bottom:5px; }
+    .auth-btn { width:100%; padding:14px; border:none; border-radius:var(--radius-sm); background:var(--navy); color:white; font-family:var(--font-body); font-size:1rem; font-weight:700; cursor:pointer; transition:var(--transition); margin-top:4px; }
+    .auth-btn:hover { background:var(--amber); color:var(--navy); }
+    .auth-btn:disabled { opacity:0.6; cursor:not-allowed; }
+    .auth-switch { text-align:center; font-size:0.85rem; color:var(--grey-600); margin-top:4px; }
+    .auth-switch a { color:var(--amber-dark); cursor:pointer; font-weight:600; }
+    .back-home { display:block; text-align:center; margin-top:18px; color:rgba(255,255,255,0.5); font-size:0.88rem; transition:var(--transition); }
+    .back-home:hover { color:white; }
+    .profession-wrap { display:none; }
+    .profession-wrap.show { display:block; }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-top">
+      <div class="login-logo">Neighbour<span>Hub</span></div>
+      <div class="login-tagline">Your neighbourhood, connected</div>
+    </div>
+
+    <div class="login-box">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+        <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="auth-form" id="form-login">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="login-email" placeholder="you@email.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')submitLogin()"/>
+        </div>
+        <button class="auth-btn" id="login-btn" onclick="submitLogin()">Login →</button>
+        <div class="auth-switch">No account? <a onclick="switchTab('signup')">Sign Up free</a></div>
+      </div>
+
+      <!-- SIGNUP -->
+      <div class="auth-form hidden" id="form-signup">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="signup-name" placeholder="Your full name"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="signup-email" placeholder="you@email.com"/>
+        </div>
+        <div class="form-group">
+          <label>I am a...</label>
+          <div class="role-row">
+            <div class="role-opt" id="opt-customer" onclick="selectRole('customer')">
+              <span class="role-icon">🛒</span>Customer
+            </div>
+            <div class="role-opt" id="opt-provider" onclick="selectRole('provider')">
+              <span class="role-icon">🔧</span>Service Provider
+            </div>
+          </div>
+          <input type="hidden" id="selected-role" value=""/>
+        </div>
+        <div class="form-group profession-wrap" id="profession-wrap">
+          <label>Your Profession</label>
+          <select id="signup-profession">
+            <option value="">-- Select profession --</option>
+            <option value="Plumber">🔧 Plumber</option>
+            <option value="Tutor">📚 Tutor</option>
+            <option value="Electrician">⚡ Electrician</option>
+            <option value="Delivery Agent">🛵 Delivery Agent</option>
+            <option value="Doctor">🩺 Doctor</option>
+            <option value="Others">🛠️ Others</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Create a strong password"/>
+        </div>
+        <button class="auth-btn" id="signup-btn" onclick="submitSignup()">Create Account →</button>
+        <div class="auth-switch">Already registered? <a onclick="switchTab('login')">Login</a></div>
+      </div>
+    </div>
+
+    <a class="back-home" href="/">← Back to Home</a>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/js/shared.js"></script>
+  <script>
+    // If already logged in, redirect
+    (async () => {
+      const res = await API.get('/api/auth/me');
+      if (res.user) location.href = '/';
+    })();
+
+    function switchTab(tab) {
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+      document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('form-signup').classList.toggle('hidden', tab !== 'signup');
+    }
+
+    function selectRole(role) {
+      document.getElementById('selected-role').value = role;
+      document.getElementById('opt-customer').classList.toggle('selected', role === 'customer');
+      document.getElementById('opt-provider').classList.toggle('selected', role === 'provider');
+      document.getElementById('profession-wrap').classList.toggle('show', role === 'provider');
+    }
+
+    async function submitLogin() {
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) return Toast.show('Please fill all fields.', 'error');
+
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true; btn.textContent = 'Logging in...';
+
+      const res = await API.post('/api/auth/login', { email, password });
+      btn.disabled = false; btn.textContent = 'Login →';
+
+      if (res.error) return Toast.show(res.error, 'error');
+      Toast.show(`Welcome back, ${res.user.name}! 👋`, 'success');
+      setTimeout(() => { location.href = '/'; }, 800);
+    }
+
+    async function submitSignup() {
+      const name       = document.getElementById('signup-name').value.trim();
+      const email      = document.getElementById('signup-email').value.trim();
+      const password   = document.getElementById('signup-password').value;
+      const role       = document.getElementById('selected-role').value;
+      const profession = document.getElementById('signup-profession').value;
+
+      if (!name || !email || !password || !role)
+        return Toast.show('Please fill all fields and select your role.', 'error');
+      if (role === 'provider' && !profession)
+        return Toast.show('Please select your profession.', 'error');
+      if (password.length < 6)
+        return Toast.show('Password must be at least 6 characters.', 'error');
+
+      const btn = document.getElementById('signup-btn');
+      btn.disabled = true; btn.textContent = 'Creating account...';
+
+      const res = await API.post('/api/auth/register', { name, email, password, role, profession });
+      btn.disabled = false; btn.textContent = 'Create Account →';
+
+      if (res.error) return Toast.show(res.error, 'error');
+      Toast.show(`Account created! Welcome, ${res.user.name} 🎉`, 'success');
+      setTimeout(() => { location.href = '/profile'; }, 900);
+    }
+  </script>
+</body>
+</html>
